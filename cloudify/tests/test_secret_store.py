@@ -102,6 +102,7 @@ class TestSecureClientConfig(testtools.TestCase):
         ctlr_cfg = SecClientCfg().controller_config
         self.assertEqual({},
                          ctlr_cfg)
+        current_ctx.clear()
 
     def test_update_config_with_secrets(self):
         """ test_update_config_with_secrets checks to see that
@@ -188,3 +189,4 @@ class TestSecureClientConfig(testtools.TestCase):
             ctlr_cfg.update_config_with_secrets(azure_config, 'azure_config'),
             expected
         )
+        current_ctx.clear()
