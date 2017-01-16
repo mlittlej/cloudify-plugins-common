@@ -43,7 +43,7 @@ except ImportError:
 
 setup(
     name='cloudify-plugins-common',
-    version='4.0a11',
+    version='4.0s',
     author='cosmo-admin',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify',
