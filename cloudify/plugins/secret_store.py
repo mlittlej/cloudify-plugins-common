@@ -15,26 +15,22 @@
 
 import os
 import copy
+
 import ghost
 from cryptography.fernet import InvalidToken
 
 from .. import ctx
 from ..exceptions import NonRecoverableError
 
-PASSPHRASE_FILENAME = 'passphrase.ghost'
-GHOST_HOME = os.path.join(os.path.expanduser('~'), '.ghost')
-DEFAULT_GHOST_STASH = os.path.join(GHOST_HOME, 'stash.json')
-POTENTIAL_PASSPHRASE_LOCATIONS = [
-    os.path.abspath(PASSPHRASE_FILENAME),
-    os.path.join(GHOST_HOME, PASSPHRASE_FILENAME),
-]
-DEFAULT_STORAGE_MAPPING = 'tinydb'
 CONTR_CFG = 'controller_config'
+DEFAULT_STORAGE_TYPE = 'tinydb'
+DEFAULT_DATABASE_URI = \
+    ghost.STORAGE_DEFAULT_PATH_MAPPING[DEFAULT_STORAGE_TYPE]
 DEFAULT_SECRET_SCHEMAS = {
     'openstack_config': {
         'key_name': 'openstack',
-        'database_uri': '~/.ghost/stash.json',
-        'storage_mapping': 'tinydb',
+        'database_uri': DEFAULT_DATABASE_URI,
+        'storage_mapping': DEFAULT_STORAGE_TYPE,
         'secret_names': {
             'username': '',
             'password': '',
@@ -43,8 +39,8 @@ DEFAULT_SECRET_SCHEMAS = {
     },
     'aws_config': {
         'key_name': 'aws',
-        'database_uri': '~/.ghost/stash.json',
-        'storage_mapping': 'tinydb',
+        'database_uri': DEFAULT_DATABASE_URI,
+        'storage_mapping': DEFAULT_STORAGE_TYPE,
         'secret_names': {
             'aws_access_key_id': '',
             'aws_secret_access_key': ''
@@ -52,8 +48,8 @@ DEFAULT_SECRET_SCHEMAS = {
     },
     'azure_config': {
         'key_name': 'azure',
-        'database_uri': '~/.ghost/stash.json',
-        'storage_mapping': 'tinydb',
+        'database_uri': DEFAULT_DATABASE_URI,
+        'storage_mapping': DEFAULT_STORAGE_TYPE,
         'secret_names': {
             'subscription_id': '',
             'tenant_id': '',
@@ -68,12 +64,13 @@ class CloudifySecretStore():
 
     def __init__(self,
                  passphrase=None,
-                 database_uri=DEFAULT_GHOST_STASH,
-                 storage_mapping=DEFAULT_STORAGE_MAPPING):
+                 database_uri=DEFAULT_DATABASE_URI,
+                 storage_mapping=DEFAULT_STORAGE_TYPE):
         self.passphrase = self._get_secret_store_passphrase(passphrase)
-        self.storage = self._get_secret_store_storage(database_uri, storage_mapping)
-        self.use = \
-            False if not self.controller_config.get('use_secret_store') else True
+        self.storage = self._get_secret_store_storage(database_uri,
+                                                      storage_mapping)
+        self.use = False \
+            if not self.controller_config.get('use_secret_store') else True
 
     @property
     def controller_config(self):
@@ -106,7 +103,7 @@ class CloudifySecretStore():
     def _get_secret_store_passphrase(self, passphrase):
         # Copied from ghost master because it's not in 0.3.0
         if not passphrase:
-            for passphrase_file_path in POTENTIAL_PASSPHRASE_LOCATIONS:
+            for passphrase_file_path in ghost.POTENTIAL_PASSPHRASE_LOCATIONS:
                 if os.path.isfile(passphrase_file_path):
                     with open(passphrase_file_path) as passphrase_file:
                         passphrase = passphrase_file.read()
@@ -148,7 +145,7 @@ class CloudifySecretStore():
         except AttributeError:
             ctx.logger.warn(
                 'key {0} does not contain secret {1}.'
-                    .format(key_name, secret_name)
+                .format(key_name, secret_name)
             )
 
     def update_config_with_secrets(self, config, config_schema_name=None):
@@ -172,15 +169,15 @@ class CloudifySecretStore():
                       aws_access_key_id: ''
                       aws_secret_access_key: ''
 
-          This function will get the key named "aws_config" from the secret store.
-          It will then fill out the values for 'aws_access_key_id', etc and return it as a dictionary.
+          This function will get the key named
+          "aws_config" from the secret store.
+          It will then fill out the values for
+          'aws_access_key_id', etc and return it as a dictionary.
 
 
         :param config_schema_name:
         :return:
         '''
-
-        ctx.logger.info('CONFIG {0}'.format(config))
 
         secret_config_schema = copy.deepcopy(
             self.controller_config.get(
@@ -188,12 +185,13 @@ class CloudifySecretStore():
                 config_schema_name, {}))
 
         storage_mapping = secret_config_schema.get('storage_mapping',
-                                                   DEFAULT_STORAGE_MAPPING)
-        database_uri = secret_config_schema.get('database_uri',
-                                                DEFAULT_GHOST_STASH)
+                                                   DEFAULT_STORAGE_TYPE)
+        database_uri = secret_config_schema.get(
+            'database_uri',
+            DEFAULT_DATABASE_URI)
 
-        if storage_mapping != DEFAULT_STORAGE_MAPPING or \
-                        database_uri != DEFAULT_GHOST_STASH:
+        if storage_mapping != DEFAULT_STORAGE_TYPE or \
+                database_uri != DEFAULT_DATABASE_URI:
             self.storage = self._get_secret_store_storage(
                 database_uri=database_uri,
                 storage_mapping=storage_mapping)
@@ -206,14 +204,15 @@ class CloudifySecretStore():
             stash = None
 
         if stash and secret_config_schema:
-            ctx.logger.info('secret_config_schema: {0}'.format(secret_config_schema))
+            ctx.logger.info(
+                'secret_config_schema: {0}'.format(secret_config_schema))
             try:
                 secret_key_name = secret_config_schema.pop('key_name')
             except KeyError:
                 raise NonRecoverableError(
                     'The secret_schema {0} is not properly formatted. '
                     'No key_name is provided.'
-                        .format(config_schema_name)
+                    .format(config_schema_name)
                 )
 
             secret_schema = secret_config_schema.get('secret_names')
@@ -223,7 +222,5 @@ class CloudifySecretStore():
                                              secret_name=secret_name,
                                              stash=stash)
                     config.update({secret_name: secret})
-
-        ctx.logger.info('CONFIG {0}'.format(config))
 
         return config
