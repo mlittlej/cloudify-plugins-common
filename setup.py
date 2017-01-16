@@ -16,7 +16,7 @@
 from setuptools import setup
 
 install_requires = [
-    'cloudify-rest-client==4.0a11',
+    'cloudify-rest-client==4.0a8',
     'pika==0.9.14',
     'networkx==1.8.1',
     'proxy_tools==0.1.0',
