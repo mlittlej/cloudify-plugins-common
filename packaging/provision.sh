@@ -49,7 +49,7 @@ function install_wagon(){
 function wagon_create_package(){
 
     echo "## wagon create package"
-    if [[ "$PLUGIN_NAME" =~ "vsphere" ]] || [[ "$PLUGIN_NAME" =~ "softlayer" ]]; then
+    if [[ "$PLUGIN_NAME" =~ "softlayer" ]]; then
         echo "git clone https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/$PLUGIN_NAME.git"
         git clone https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/$PLUGIN_NAME.git
         pushd $PLUGIN_NAME
