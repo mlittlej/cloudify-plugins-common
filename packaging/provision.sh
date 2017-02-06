@@ -89,8 +89,7 @@ install_common_prereqs &&
 print_plugins_params
 install_dependencies &&
 install_wagon &&
-wagon_create_package
-#wagon_create_package &&
+wagon_create_package &&
 #create_md5 "wgn" &&
-#[ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 "wgn" && upload_to_s3 "md5"
+[ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 "wgn" && upload_to_s3 "md5"
 
